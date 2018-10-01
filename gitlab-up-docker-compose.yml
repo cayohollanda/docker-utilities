@@ -30,6 +30,8 @@ services:
   gitlab-registry:
     restart: always
     image: registry:2
+    depends_on:
+    - gitlab
     ports:
     - "5000:5000"
 
