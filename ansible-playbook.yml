@@ -11,6 +11,9 @@
     SECRETS_DB_KEY_BASE: "secret-db-key-base"
     SECRETS_SECRET_KEY_BASE: "secret-key-base"
     SECRETS_OTP_KEY_BASE: "secret-otp-key-base"
+    OPENSHIFT_PUBLIC_HOSTNAME: "tt1.eastus.cloudapp.azure.com"
+    OPENSHIFT_ROUTING_SUFFIX: "40.117.95.16"
+  become: yes
   tasks:
     - name: "Instalando yum utils"
       yum:
@@ -97,7 +100,7 @@
                   --publish {{ SSH_PORT }}:22 \
                   --env 'DEBUG=false' \
                   --env 'DB_ADAPTER=postgresql' \
-                  --env 'DB_HOST=postgresql' \
+                  --env 'DB_HOST=gitlab-postgresql' \
                   --env 'DB_PORT=5432' \
                   --env 'DB_USER={{ DB_USER }}' \
                   --env 'DB_PASS={{ DB_PASS }}' \
@@ -113,3 +116,27 @@
                   --restart=always \
                   --name=gitlab \
                   sameersbn/gitlab:latest"
+
+    - name: "Criando pasta para baixar os arquivos"
+      file: path=/home/{{ USER }}/ansible-playbook state=directory
+
+    - name: "Baixando o OpenShift Client Tools (OC)"
+      get_url: 
+        url="https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-server-v3.11.0-0cbc58b-linux-64bit.tar.gz"
+        dest=/home/{{ USER }}/ansible-playbook
+
+    - name: "Descompactando OC"
+      unarchive:
+        src: /home/{{ USER }}/ansible-playbook/openshift-origin-server-v3.11.0-0cbc58b-linux-64bit.tar.gz
+        dest: /home/{{ USER }}/ansible-playbook
+        remote_src: yes
+
+    - name: "Movendo executável para $PATH"
+      command: "cp /home/{{ USER }}/ansible-playbook/openshift-origin-server-v3.11.0-0cbc58b-linux-64bit/oc /usr/local/bin/"
+
+    - name: "Rodando OpenShift"
+      become_user: "{{ USER }}"
+      command: "oc cluster up \
+                  --skip-registry-check=true \
+                  --public-hostname={{ OPENSHIFT_PUBLIC_HOSTNAME }} \
+                  --routing-suffix={{ OPENSHIFT_ROUTING_SUFFIX }}"
