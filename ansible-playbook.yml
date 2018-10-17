@@ -120,23 +120,11 @@
     - name: "Criando pasta para baixar os arquivos"
       file: path=/home/{{ USER }}/ansible-playbook state=directory
 
-    - name: "Baixando o OpenShift Client Tools (OC)"
-      get_url: 
-        url="https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-server-v3.11.0-0cbc58b-linux-64bit.tar.gz"
-        dest=/home/{{ USER }}/ansible-playbook
-
-    - name: "Descompactando OC"
+    - name: "Baixando e descompactando o OpenShift Client Tools (OC)"
       unarchive:
-        src: /home/{{ USER }}/ansible-playbook/openshift-origin-server-v3.11.0-0cbc58b-linux-64bit.tar.gz
+        src: https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-server-v3.11.0-0cbc58b-linux-64bit.tar.gz
         dest: /home/{{ USER }}/ansible-playbook
         remote_src: yes
 
     - name: "Movendo executável para $PATH"
       command: "cp /home/{{ USER }}/ansible-playbook/openshift-origin-server-v3.11.0-0cbc58b-linux-64bit/oc /usr/local/bin/"
-
-    - name: "Rodando OpenShift"
-      become_user: "{{ USER }}"
-      command: "oc cluster up \
-                  --skip-registry-check=true \
-                  --public-hostname={{ OPENSHIFT_PUBLIC_HOSTNAME }} \
-                  --routing-suffix={{ OPENSHIFT_ROUTING_SUFFIX }}"
